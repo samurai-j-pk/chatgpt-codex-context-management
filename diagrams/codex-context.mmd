@@ -58,13 +58,17 @@ flowchart TB
 
     A["Response or action context<br/>────────────<br/>The limited working set used to answer, inspect files, run an approved tool, or propose a change."]
 
-    O["Codex response<br/>────────────<br/>A reply, inspection result, explanation, or proposed next step."]
+    O["Codex response<br/>────────────<br/>A reply, inspection result, explanation, proposed next step, or report of an action performed."]
 
-    FOUT["File or repository change — when requested<br/>────────────<br/>A created artifact, a new file, an edited file, or a change to an existing repository."]
+    EXEC["Task execution environment<br/>────────────<br/>For an action, Codex uses the workspace, tools, shell, and process environment available to this task. This operational environment is separate from the limited response context used by the model."]
 
-    APPROVAL["Write permission and approval<br/>────────────<br/>Your task's permission and approval settings determine whether Codex can make the change now or must first propose it for your approval."]
+    SANDBOX["Sandbox boundary<br/>────────────<br/>Codex's built-in file operations and spawned commands run inside enforced limits on file access and network use. Commands such as Git, package managers, and test runners inherit the same boundary."]
 
-    DEST["Output destination<br/>────────────<br/>When the destination matters, specify the intended local folder, repository, or file path. A folder used as source context is not automatically the output destination."]
+    APPROVAL["Approval policy<br/>────────────<br/>The sandbox defines the technical boundary. The approval policy determines when Codex must stop and ask before an action may cross that boundary."]
+
+    RESULT["Action result<br/>────────────<br/>Within the permitted scope, Codex may inspect files, run commands, create or edit files, or change a Git repository. The result may inform the response and may leave durable changes in the filesystem."]
+
+    DEST["Durable output destination<br/>────────────<br/>Specify the intended local folder, repository, or file path when it matters. A source folder is not automatically the output destination. Important local outputs require your own synchronization, backup, or Git workflow."]
 
     I --> S
     LFR -->|"Inspect when relevant"| S
@@ -74,6 +78,11 @@ flowchart TB
 
     S --> A
     A --> O
-    A --> FOUT
-    FOUT --> APPROVAL
-    APPROVAL --> DEST
+    A --> EXEC
+    EXEC --> SANDBOX
+    SANDBOX -->|"Within the boundary"| RESULT
+    SANDBOX -->|"Needs access beyond the boundary"| APPROVAL
+    APPROVAL -->|"If approved"| RESULT
+    APPROVAL -. "If not approved, report the limitation" .-> O
+    RESULT --> O
+    RESULT --> DEST
