@@ -1,0 +1,80 @@
+flowchart TB
+    Q["Your new message<br/>────────────<br/>The question, instruction, typed message, or voice request you make now."]
+
+    I["Immediate context<br/>────────────<br/>Relevant turns from the current chat that fit within the model's context window."]
+
+    Q --> I
+    Q -. "May later inform<br/>Account Memory generation" .-> AH
+    Q -. "May later inform<br/>local-memory generation" .-> LH
+
+    X{"Chat or Work?<br/>────────────<br/>Only desktop Work can use a permitted local folder. Chat has no documented local-folder access."}
+
+    WA["Work local-file access<br/>────────────<br/>For a Work chat, you may open a local folder and grant access when your ChatGPT plan and workspace permissions allow it."]
+    WF["Local files<br/>────────────<br/>The permitted copy of a folder and its files available on this device, which Work can use as a conditional context source. That local copy may be synchronized with shared cloud storage, so equivalent files can be available to desktop-app installations on other devices after synchronization."]
+    WR["Work file retrieval<br/>────────────<br/>Within the permitted folder, Work may inspect relevant files when you instruct it to do so or when it determines that inspection is needed for the current Work chat. The whole folder is not loaded into every response context."]
+
+    Q --> X
+    X -->|"Work, with permission"| WA
+    WA --> WF
+    WF --> WR
+
+    subgraph CUSTOM["Custom Instructions — explicit user-authored guidance"]
+        CW["ChatGPT web — More about you<br/>────────────<br/>Information and instructions you enter for ChatGPT to take into account across ChatGPT chats. It is separate from Account Memory."]
+        CD["Desktop Custom Instructions — this device<br/>────────────<br/>Instructions entered in Settings → Personalization. The desktop screen says they apply to chats on this host; because that term is not defined further, this diagram treats them as device-specific. Their relationship to the web Custom Instructions store is not documented."]
+    end
+
+    subgraph ACCOUNT["Account-level Memory"]
+        U["Your controls — web ChatGPT<br/>────────────<br/>In ChatGPT's web settings, you decide whether Account Memory is allowed. There you can ask to remember or forget information, and correct or delete memories."]
+        AH["Account-memory sources<br/>────────────<br/>Past chats, files, and connected-app information that may contain useful facts, preferences, or background."]
+        W["Memory consolidation<br/>────────────<br/>The system may select and condense useful information into Account Memory. It does not save every message."]
+        M["Account Memory<br/>────────────<br/>A selective, account-level profile of remembered facts and preferences. It can carry across devices."]
+        U --> W
+        AH --> W
+        W --> M
+    end
+
+    subgraph LOCAL["Local memory — this device"]
+        LU["Your controls — desktop app<br/>────────────<br/>You decide whether local memories may be created on this device, including optionally from tool-assisted chats."]
+        LH["Local-memory sources<br/>────────────<br/>Chats on this device, and optionally chats that use tools or web search."]
+        LW["Local-memory generation<br/>────────────<br/>The desktop app may create remembered information from those chats."]
+        LM["Local memory<br/>────────────<br/>Stored on this device, with contents that are device-specific and do not carry over to another device. It is used to personalize future chats on this device, but OpenAI does not specify what it contains or how it affects future responses. Whether it is shared between Chat/Work and Codex on the same device is not documented by OpenAI, and is therefore unknown. Treat it as an opaque local-personalization layer—not a reliable knowledge base or archive. Its possible effect alone should not determine which device you use, even though it may create some difference in responses between devices."]
+        LU --> LW
+        LH --> LW
+        LW --> LM
+    end
+
+    subgraph PROJECT["Project context — only when this chat belongs to a Project"]
+        PI["Project instructions<br/>────────────<br/>Standing guidance that applies inside this Project."]
+        PC["Project chats<br/>────────────<br/>Previous chats that belong to this Project."]
+        PF["Project files and saved sources<br/>────────────<br/>Files uploaded or saved into this Project."]
+        PA["Project app sources<br/>────────────<br/>Available material from connected apps that was added to this Project."]
+        PS["Project memory scope<br/>────────────<br/>The Project-bound pool of instructions, chats, files, and sources."]
+        R["Project retrieval<br/>────────────<br/>The system may select relevant material from the Project memory scope for this response."]
+        PI --> PS
+        PC --> PS
+        PF --> PS
+        PA --> PS
+        PS --> R
+    end
+
+    Q -. "If this chat is in a Project,<br/>it later becomes part of Project chat history" .-> PC
+
+    S["Context selection<br/>────────────<br/>The system selects relevant available material for this particular response."]
+    A["Response context<br/>────────────<br/>The limited working set used to generate this one answer."]
+    O["ChatGPT response<br/>────────────<br/>The answer produced from the selected response context."]
+    FOUT["File or artifact output — when requested<br/>────────────<br/>A document, spreadsheet, presentation, report, or other concrete deliverable."]
+    DEST["Output destination<br/>────────────<br/>Specify where Work should create the file if you want it saved in a particular local folder. A permitted source folder is not automatically the output destination."]
+
+    I --> S
+    WR -->|"Use when relevant"| S
+    CW -->|"Applies as standing user guidance"| S
+    CD -->|"Applies on this device"| S
+    PI -->|"Applies to every Project response"| S
+    R -->|"Retrieve when relevant"| S
+    M --> S
+    LM -->|"May personalize on this device"| S
+
+    S --> A
+    A --> O
+    A --> FOUT
+    FOUT --> DEST

@@ -1,0 +1,79 @@
+flowchart TB
+    Q["Your new request<br/>────────────<br/>The question, instruction, typed message, or voice request you make now."]
+
+    I["Immediate task context<br/>────────────<br/>Relevant turns and tool results from the current Codex task that fit within the model's context window."]
+
+    Q --> I
+
+    subgraph TASK["Current Codex task — equivalent to a Chat or Work chat; histories remain separate in both directions"]
+        TH["Earlier task messages and results<br/>────────────<br/>The earlier requests, follow-ups, replies, tool results, and approved actions belonging to this Codex task. Chat/Work chats do not carry into Codex task history, and Codex tasks do not carry into Chat/Work chat history."]
+
+        CI["Custom Instructions — optional<br/>────────────<br/>Standing instructions entered in the Custom Instructions text field under Settings → Personalization. The desktop screen calls its scope ‘this host’; because that term is not defined further, this diagram treats it as device-specific."]
+
+        TH --> I
+        CI --> I
+    end
+
+    subgraph FILES["Local files you allow Codex to use"]
+        LF["Local folder<br/>────────────<br/>A permitted copy of a folder available on this device. That local copy may be synchronized with shared cloud storage, so equivalent files can be available to Codex on another device after synchronization."]
+
+        REPO["Git repository<br/>────────────<br/>A local folder managed with Git, including version history and repository metadata. Each device can have its own local clone connected to the same shared remote repository; exchanging changes then requires the normal Git pull and push workflow."]
+
+        LFR["Local-folder retrieval<br/>────────────<br/>Within an allowed local folder, Codex may inspect relevant files when you instruct it to or when it determines that inspection is needed for the current task. The whole folder is not automatically placed into one response context."]
+
+        GRR["Git-repository retrieval<br/>────────────<br/>Within an allowed Git repository, Codex may inspect relevant files, Git history, repository metadata, or command results when you instruct it to or when it determines that inspection is needed for the current task. The whole repository is not automatically placed into one response context."]
+
+        LF --> LFR
+        REPO --> GRR
+    end
+
+    subgraph PROJECT["Codex Projects"]
+        CP["Codex Project — related Codex work<br/>────────────<br/>An app-level grouping shown in the Codex sidebar. Use it to organize related Codex tasks and associated local folders or Git repositories; Codex also supports multiple Git repositories in one Project. Its current interface is a work container, unlike the richer Chat/Work Project interface for cloud instructions, sources, chats, and memory-related scope. A Codex Project is distinct from a task, local folder, or Git repository."]
+
+        CWP["Linked Chat/Work Project catalogue<br/>────────────<br/>The combined desktop app can show Chat/Work Projects as available choices in Codex. This establishes a visible link between the Project lists, but OpenAI does not document which Project materials, if any, automatically synchronize, are fetched as context, or flow in either direction."]
+
+        CP <-. "Project-list linkage visible in the combined app" .-> CWP
+    end
+
+    TH ~~~ LF
+    LF ~~~ CP
+
+    subgraph LOCAL["Local memory — this device"]
+        LU["Your controls — desktop app<br/>────────────<br/>You decide whether local memories may be created on this device, including optionally from tool-assisted chats."]
+
+        LH["Local-memory sources<br/>────────────<br/>Codex chats on this device, and optionally chats that use tools or web search."]
+
+        LW["Local-memory generation<br/>────────────<br/>The desktop app may create remembered information from those chats."]
+
+        LM["Local memory<br/>────────────<br/>Stored on this device, with contents that are device-specific and do not carry over to another device. It is used to personalize future chats on this device, but OpenAI does not specify what it contains or how it affects future responses. Whether it is shared between Chat/Work and Codex on the same device is not documented by OpenAI, and is therefore unknown. Treat it as an opaque local-personalization layer—not a reliable knowledge base or archive. Its possible effect alone should not determine which device you use, even though it may create some difference in responses between devices."]
+
+        LU --> LW
+        LH --> LW
+        LW --> LM
+    end
+
+    Q -. "May later inform<br/>local-memory generation" .-> LH
+
+    S["Context selection<br/>────────────<br/>Codex assembles the material relevant to this particular response or action."]
+
+    A["Response or action context<br/>────────────<br/>The limited working set used to answer, inspect files, run an approved tool, or propose a change."]
+
+    O["Codex response<br/>────────────<br/>A reply, inspection result, explanation, or proposed next step."]
+
+    FOUT["File or repository change — when requested<br/>────────────<br/>A created artifact, a new file, an edited file, or a change to an existing repository."]
+
+    APPROVAL["Write permission and approval<br/>────────────<br/>Your task's permission and approval settings determine whether Codex can make the change now or must first propose it for your approval."]
+
+    DEST["Output destination<br/>────────────<br/>When the destination matters, specify the intended local folder, repository, or file path. A folder used as source context is not automatically the output destination."]
+
+    I --> S
+    LFR -->|"Inspect when relevant"| S
+    GRR -->|"Inspect when relevant"| S
+    CP -. "Possible contribution to context — mechanism not documented" .-> S
+    LM -->|"May personalize on this device"| S
+
+    S --> A
+    A --> O
+    A --> FOUT
+    FOUT --> APPROVAL
+    APPROVAL --> DEST
